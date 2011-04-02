@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocompact="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc tocindent="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes"?>
+<?rfc comments="yes"?>
+<?rfc inline="yes"?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<rfc category="exp" docName="draft-my-document-00" ipr="full3978">
+  <front>
+    <title abbrev="dfp">Domain Federation Protocol</title>
+
+    <author fullname="Martin Atkins" initials="M." surname="Atkins">
+      <organization>SAY Media</organization>
+    </author>
+
+    <date />
+
+    <abstract>
+      <t>This document describes a mechanism for domains to create ad-hoc,
+      verified associations and then using these associations to enable
+      user-to-user communication between domains. The protocol defined herein
+      provides a generalized mechanism for communication between entities on
+      different domains, but is intended primarily as a means to allow social
+      network users to interact across network and application boundaries.</t>
+    </abstract>
+
+    <note title="Requirements Language">
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+      "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+      document are to be interpreted as described in <xref
+      target="RFC2119">RFC 2119</xref>.</t>
+    </note>
+  </front>
+
+  <middle>
+    <section title="Introduction">
+      <section title="Overview">
+        <t>The Domain Federation Protocol (DFP) is a protocol for federated
+        communication between users or other entities on different domains.
+        This protocol creates a verified, unidirectional association between
+        two domains and establishes a means of identifying users or other
+        entities within these domains, with the goal of enabling social
+        networking interactions between said entities.</t>
+
+        <t>DFP is built on similar architectural principles to the Simple Mail
+        Transfer Protocol (SMTP) and the Extensible Messaging and Presence
+        Protocol (XMPP), but adapts the architectural model for use by
+        applications communicating exclusively by Hypertext Transfer Protocol
+        (HTTP) messages.</t>
+
+        <t>This protocol is designed primarily for use in asychronous,
+        background communications. It is not optimized for scenarios where a
+        foreground response to a user is blocked by the completion of this
+        protocol.</t>
+
+        <t>This protocol is also designed to establish associations at the
+        domain level, meaning that this protocol's efficiency is not degraded
+        as more users are added to a given domain. However, since each domain
+        pair requires a separate association, it is more efficient on a
+        per-user resource investment basis to communicate with a domain with
+        many users than a domain with fewer users.</t>
+      </section>
+    </section>
+
+    <section title="Addressing Scheme">
+      <section title="Overview">
+        <t>An entity is anything that can be considered to have a presence on
+        a social network. This includes but is not limited to users,
+        organizations and software "bots". An entity is uniquely addressed,
+        for the purposes of this protocol, by a <spanx style="emph">node identifier</spanx>
+        and a <spanx style="emph">domain identifier</spanx>. For convenience
+        these can be serialized into a single string called an <spanx
+        style="emph">entity identifier</spanx>.</t>
+
+        <t><spanx style="strong">TODO: write some BNF for this. basically it's the obvious node@domain syntax, with similar syntax constraints to that of email addresses</spanx></t>
+      </section>
+
+      <section title="Domain Identifier">
+        <t>The domain identifier consists of a fully qualified domain name, as
+        defined by <xref target="RFC1035"></xref>. When used in this protocol,
+        the domain is in ASCII. However, applications SHOULD accept user input
+        of domains in Unicode and present domains to users in Unicode and
+        apply the conversions defined in <xref target="RFC3490"></xref> to
+        translate to and from the ASCII representation that will be used to
+        serialize the domain identifier for use in DFP.</t>
+      </section>
+
+      <section title="Entity Identifier">
+        <t>The entity identifier is a name, unique within a particular domain,
+        that identifies an entity. An entity identifier is any sequence of
+        octets that is considered valid and normalized UTF-8, except that this
+        sequence may not contain codepoints U+0020 (space) nor U+0040 (at
+        sign). Applications SHOULD reject identifiers that are not valid or
+        normalized UTF-8. Given that only normalized UTF-8 is permitted,
+        identifiers MAY be compared octet-for-octet internally by
+        applications, but identifiers should be displayed to users using the
+        unicode characters that result from decoding the octet sequence.</t>
+
+        <t><spanx style="strong">TODO: What is a good thing to reference about normalized UTF-8?</spanx></t>
+      </section>
+    </section>
+
+    <section anchor="domain-dialback"
+             title="Establishing Domain Associations with Domain Dialback">
+      <section title="Overview">
+        <t>Domain Dialback is a lightweight mechanism by which a target domain
+        can verify a request from a source domain and then issue a temporary
+        bearer token to the source domain for use in subsequent requests.</t>
+
+        <t>The domain dialback mechanism is made possible by the existence of
+        the Domain Name System (DNS), since one server can (normally) discover
+        the authoritative server for a given domain.</t>
+
+        <t>Domain dialback is uni-directional, and results in weak
+        verification of identity in one direction. Mutual authentication is
+        not possible via dialback. Therefore, domain dialback MUST be
+        completed in each direction in order to enable bi-directional
+        communications between two domains.</t>
+      </section>
+    </section>
+
+    <section title="Other Mechanisms for Establishing Domain Associations">
+      <t>Domain dialback as described in <xref
+      target="domain-dialback"></xref> provides a lightweight, generic
+      mechanism for establishing an association between two arbitrary domains.
+      A pair of domains MAY use an alternative means, not defined by this
+      specification, to establish an association. This includes but is not
+      limited to a protocol involving use and verification of SSL client
+      certificates, or an application-specific domain pre-registration
+      procedure.</t>
+
+      <t>Domains SHOULD support domain dialback in order to achieve maximum
+      interoperability, but domains MAY consider associations established via
+      domain dialback less trustworthy than those established by other means
+      and provide differing levels of functionality depending on the mechanism
+      used.</t>
+    </section>
+
+    <section title="HTTP Message Extensions">
+      <section title="Overview">
+        <t>The sections that follow describe extensions to the Hypertext
+        Transfer Protocol (HTTP) that allow an HTTP request to carry a
+        verifyable source identity based on a previously-established domain
+        association.</t>
+      </section>
+
+      <section title="The DFPEntity Authentication Scheme">
+        <t>This specification establishes a new HTTP authentication scheme
+        whose identifier is <spanx style="verb">DFPEntity</spanx>. This scheme
+        can be used to act as an entity within a domain using a
+        previously-established domain association bearer token.</t>
+
+        <figure>
+          <artwork><![CDATA[Authorization: DFPEntity john.smith 1sb25b53534b34:44533]]></artwork>
+        </figure>
+
+        <t>An HTTP server supporting this authentication scheme MUST
+        determine, via a means outside the scope of this specification, which
+        domain the given association bearer token belongs to. If no such
+        association exists, authentication fails. If such an association
+        exists, the identity of the requester is the entity identified by the
+        given entity identifier and the domain identifier corresponding to the
+        association bearer token.</t>
+      </section>
+    </section>
+
+    <section anchor="Security" title="Security Considerations">
+      <section title="Considerations for Domain Dialback">
+        <t>The domain dialback mechanism described in <xref
+        target="domain-dialback"></xref> helps prevent against domain
+        spoofing, thus making it more difficult to send a message that a
+        target will falsely believe to be sent from another sender. It is not
+        a mechanism for authenticating, securing or encrypting communications
+        between two domains. It is susceptable to DNS poisoning attacks unless
+        DNSSEC is used or unless a trustworthy verification of the source
+        domain's TLS certificate is possible.</t>
+      </section>
+    </section>
+
+    <section anchor="Acknowledgements" title="Acknowledgements">
+      <t></t>
+    </section>
+  </middle>
+
+  <back>
+    <references title="Normative References">
+      <reference anchor="RFC1035">
+        <front>
+          <title>Domain Names - Implementation and Specification</title>
+
+          <author fullname="P. Mockapetris" initials="P."
+                  surname="Mockapetris">
+            <organization></organization>
+          </author>
+
+          <date month="November" year="1987" />
+        </front>
+      </reference>
+
+      <reference anchor="RFC3490">
+        <front>
+          <title>Internationalizing Domain Names in Applications</title>
+
+          <author fullname="Patrik Faltstrom" initials="P."
+                  surname="Faltstrom">
+            <organization></organization>
+          </author>
+
+          <date month="March" year="2003" />
+        </front>
+      </reference>
+
+      <?rfc include="reference.RFC.2119"?>
+    </references>
+  </back>
+</rfc>
