@@ -10,7 +10,9 @@
 <?rfc inline="yes"?>
 <?rfc compact="yes"?>
 <?rfc subcompact="no"?>
-<rfc category="exp" docName="draft-my-document-00" ipr="full3978">
+<?rfc iprnotified="yes"?>
+<?rfc topblock="no"?>
+<rfc category="exp" docName="draft-dfp-00" ipr="none">
   <front>
     <title abbrev="dfp">Domain Federation Protocol</title>
 
