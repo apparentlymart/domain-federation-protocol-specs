@@ -105,6 +105,25 @@
       </section>
     </section>
 
+    <section anchor="discovery-document"
+             title="Retrieving the Discovery Document for a Domain">
+      <section title="Overview">
+        <t>The discovery document for a domain is an HTTP resource that
+        describes the federation resources available for a domain. The URL of
+        a domain's discovery document is obtained by adding the prefix <spanx
+        style="verb">https://</spanx> and the suffix <spanx style="verb">/.well-known/federation</spanx>
+        do the domain. This resource MUST respond to an HTTP GET request by
+        returning an entity whose <spanx style="verb">Content-Type</spanx> is
+        <spanx style="verb">application/json</spanx> and whose body is a valid
+        JSON object. The properties of this object and their valid values can
+        be defined by other specifications. This specification defines one
+        initial property in <xref target="domain-dialback"></xref>.</t>
+
+        <t>Clients MUST make use of the standard HTTP caching mechanisms to
+        avoid imposing unnecessary load on the target server.</t>
+      </section>
+    </section>
+
     <section anchor="domain-dialback"
              title="Establishing Domain Associations with Domain Dialback">
       <section title="Overview">
@@ -121,6 +140,88 @@
         not possible via dialback. Therefore, domain dialback MUST be
         completed in each direction in order to enable bi-directional
         communications between two domains.</t>
+      </section>
+
+      <section title="Determining the URL of a Domain's Association Endpoint">
+        <t>The URL of a domain's association endpoint is declared in the
+        domain's discovery document (<xref
+        target="discovery-document"></xref>) via the property <spanx
+        style="verb">associate</spanx>. Its value is a JSON string containing
+        an absolute URL using the <spanx style="verb">https:</spanx>
+        scheme.</t>
+      </section>
+
+      <section title="Requesting an Association">
+        <t>A source domain requests a unidirectional association with a target
+        domain by making an HTTP POST request to the target domain's
+        association endpoint. The Content-Type of this request is
+        application/x-www-form-urlencoded and its payload is the following
+        parameters encoded with this encoding scheme:</t>
+
+        <t><list style="hanging">
+            <t hangText="mode">The literal string <spanx style="verb">associate</spanx>.</t>
+
+            <t hangText="domain">The source domain.</t>
+
+            <t hangText="verifier">A string, containing only ASCII characters,
+            that allows the source domain to uniquely recognize this request
+            during verification.</t>
+          </list></t>
+
+        <t>The response to this request is delayed until the dialback process
+        is completed, as described in the following section.</t>
+      </section>
+
+      <section title="Verifying an Incoming Association Request">
+        <t>A target domain verifies an association request by making an HTTP
+        POST request to the target domain's association endpoint. Again, the
+        Content-Type of this request is application/x-www-form-urlencoded. Its
+        payload is the following parameters:</t>
+
+        <t><list style="hanging">
+            <t hangText="mode">The literal string <spanx style="verb">verify</spanx>.</t>
+
+            <t hangText="domain">The target domain.</t>
+
+            <t hangText="verifier">The token provided by the client in the
+            association request.</t>
+          </list></t>
+
+        <t>If the provided domain and token represent a known, outstanding
+        association request the source domain responds with a <spanx
+        style="verb">200 OK</spanx> response whose Content-Type is <spanx
+        style="verb">application/json</spanx> and whose body is a JSON object
+        with a single property <spanx style="verb">verifier</spanx>, whose
+        value is a JSON string echoing back the verifier. The request is
+        <spanx style="emph">not</spanx> verified if the response status is not
+        200, if the response body is not a JSON object or if the <spanx
+        style="verb">token</spanx> value does not match the expected value.
+        Requiring the verifier to be echoed back avoids falsely detecting a
+        verified request for resources that return 200 OK unconditionally and
+        are not intentionally responding to the verify request.</t>
+      </section>
+
+      <section title="Responding to the Association Request">
+        <t>If the association request is verified, the response to the
+        association request has the status <spanx style="verb">200 OK</spanx>
+        and the Content-Type <spanx style="verb">application/json</spanx>. The
+        body of this response is a JSON object with the following
+        properties:</t>
+
+        <t><list style="hanging">
+            <t hangText="token">A JSON string containing the bearer token that
+            will act as a shared secret allowing the source domain to make
+            authenticated requests to the target domain using this
+            association.</t>
+
+            <t hangText="expires_in">A JSON integer giving the number of
+            seconds after which this association is invalid.</t>
+          </list></t>
+
+        <t>In order to reduce problems related to clock skew or response
+        delay, the source domain MUST actually discard created association two
+        minutes before the expire time, and the target domain MUST consider
+        the association valid for two minutes after the expire time.</t>
       </section>
     </section>
 
