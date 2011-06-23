@@ -153,7 +153,7 @@
         scheme.</t>
       </section>
 
-      <section title="Requesting an Association">
+      <section anchor="request-association" title="Requesting an Association">
         <t>A source domain requests a unidirectional association with a target
         domain by making an HTTP POST request to the target domain's
         association endpoint. The Content-Type of this request is
@@ -224,6 +224,55 @@
         delay, the source domain MUST actually discard created association two
         minutes before the expire time, and the target domain MUST consider
         the association valid for two minutes after the expire time.</t>
+      </section>
+    </section>
+
+    <section title="Establishing Domain Associations with pre-determined credentials">
+      <section title="Overview">
+        <t>A target domain MAY offer a means by which a source domain can
+        establish a relationship out of band of the DFP flow. In this case,
+        the target domain issues the source domain a set of credentials which
+        it can use in an extended version of the association request. A target
+        domain MAY offer additional functionality for associations established
+        in this way, for example if the prior relationship was dependent on
+        the organisation responsible for the source domain agreeing to terms
+        of use that are required for such additional access.</t>
+
+        <t>An existing relationship is identified by a <spanx style="emph">client id</spanx>
+        and authenticated via a <spanx style="emph">client secret</spanx>.
+        These terms are taken from OAuth 2.0 but in practice the target domain
+        may issue any set of credentials it wishes, with no requirement that
+        these credentials are also usable in any OAuth 2.0 request.</t>
+
+        <t>If the target domain does verification of domain ownership as part
+        of the pre-registration process (using a mechanism that is out of
+        scope for this specification), it MAY skip the dialback verification
+        process when establishing an association. However, this is not
+        required, and a target domain MAY still perform dialback verification
+        for association requests that include client credentials, for example
+        if the client credentials identify an application or organization but
+        not any particular source domain.</t>
+
+        <t>The following parameters are used when supplying client
+        credentials, in addition to the parameters specified in <xref
+        target="request-association"></xref>, which are all still required in
+        this case:</t>
+
+        <t><list style="hanging">
+            <t hangText="client_id">An opaque token issued by the target
+            domain to identify the requesting application.</t>
+
+            <t hangText="client_secret">A shared secret issued by the target
+            domain to use with the provided client_id.</t>
+          </list></t>
+
+        <t>A target domain MAY require client credentials in order to
+        establish an association, in which case it must respond to an
+        association request without credentials using a client error HTTP
+        response code such as 400 Bad Request. However, such a target domain
+        MAY instead grant an association that provides limited access for
+        requests without client credentials, allowing limited interoperability
+        for clients that have not pre-registered.</t>
       </section>
     </section>
 
